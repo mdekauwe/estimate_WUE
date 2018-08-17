@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
 """
-Estimate ecosystem WUE
+Estimate ecosystem WUE for FLUXNET2015, La Thuile and OzFlux.
+
+NB. relies on datasets being pre-processed via Anna's package
+https://github.com/aukkola/FluxnetLSM
 
 That's all folks.
 """
@@ -345,8 +348,8 @@ if __name__ == "__main__":
     num_cores = None
     ofname = os.path.join(output_dir, "WUE.csv")
     # if empty...run all the files in the met_dir
-    flux_subset = ['US-Ha1_1991-2012_FLUXNET2015_Flux.nc',\
-                   'FR-Pue_2000-2014_FLUXNET2015_Flux.nc'] #[]
+    flux_subset = []#['US-Ha1_1991-2012_FLUXNET2015_Flux.nc',\
+                   #'FR-Pue_2000-2014_FLUXNET2015_Flux.nc'] #[]
     data_source = ["FLUXNET2015"] # ignored if the above isn't empty
     # ------------------------------------------- #
 
