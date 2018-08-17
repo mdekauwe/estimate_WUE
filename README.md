@@ -1,4 +1,4 @@
-# FLUXNET WUE
+# Estimate WUE from FLUXNET2015, La Thuile and OzFlux
 
 ## Overview ##
 Blah blah
