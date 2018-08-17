@@ -345,7 +345,7 @@ if __name__ == "__main__":
     # if empty...run all the files in the met_dir
     flux_subset = ['US-Ha1_1991-2012_FLUXNET2015_Flux.nc',\
                    'FR-Pue_2000-2014_FLUXNET2015_Flux.nc'] #[]
-    data_source = ["FLUXNET2015"]
+    data_source = ["FLUXNET2015"] # ignored if the above isn't empty
     # ------------------------------------------- #
 
     W = EstimateWUE(flux_dir=flux_dir, output_dir=output_dir, met_dir=met_dir,
