@@ -50,6 +50,8 @@ class EstimateWUE(object):
 
         self.out_cols = ["Site","Year","WUE"]
 
+        self.bad_sites = {'IT-Cpz':'1997-1998'}
+
     def main(self):
 
         (flux_files, met_files) = self.initialise_stuff()
@@ -125,13 +127,6 @@ class EstimateWUE(object):
 
         output.put(df_out)
 
-    def write_row(self, site, df, i, df_out):
-
-        row = pd.Series([site, df.index.year[i], df.wue[i]],
-                        index=self.out_cols)
-        result = df_out.append(row, ignore_index=True)
-
-        return result
 
     def initialise_stuff(self):
 
@@ -172,6 +167,13 @@ class EstimateWUE(object):
                     new = i.replace("Flux", "Met", 2).\
                             replace("Met", "Flux", 1)
                     met_files.append(os.path.join(self.met_dir, new))
+
+        for i,j in zip(flux_files, met_files):
+            for k,v in self.bad_sites.items():
+                if k in i:
+                    if v in i:
+                        flux_files.remove(i)
+                        met_files.remove(j)
 
         return (flux_files, met_files)
 
@@ -339,6 +341,15 @@ class EstimateWUE(object):
 
         return (months, missing_gpp)
 
+    def write_row(self, site, df, i, df_out):
+
+        row = pd.Series([site, df.index.year[i], df.wue[i]],
+                        index=self.out_cols)
+        result = df_out.append(row, ignore_index=True)
+
+        return result
+
+
 if __name__ == "__main__":
 
     # ------------------------------------------- #
@@ -348,8 +359,11 @@ if __name__ == "__main__":
     num_cores = None
     ofname = os.path.join(output_dir, "WUE.csv")
     # if empty...run all the files in the met_dir
-    flux_subset = []#['US-Ha1_1991-2012_FLUXNET2015_Flux.nc',\
-                   #'FR-Pue_2000-2014_FLUXNET2015_Flux.nc'] #[]
+    #flux_subset = ['US-Ha1_1991-2012_FLUXNET2015_Flux.nc',\
+    #               'IT-Cpz_1997-1998_FLUXNET2015_Flux.nc',\
+    #               'IT-Cpz_2000-2009_FLUXNET2015_Flux.nc',\
+    #               'FR-Pue_2000-2014_FLUXNET2015_Flux.nc'] #[]
+    flux_subset = []
     data_source = ["FLUXNET2015"] # ignored if the above isn't empty
     # ------------------------------------------- #
 
