@@ -195,15 +195,15 @@ class EstimateWUE(object):
         # Screen for measured and good gap-filled data
         if source == "OzFlux":
             # Measured = 0 ; 10 = instrument calibration correction,  good data
-            df_met.where(np.logical_or(df_flx.Qle_qc == 0, df_flx.Qle_qc == 10),
+            df_met.where(np.logical_or(df_flx.Qle_qc == 0, df_flx.Qle_qc == 1),
                          inplace=True)
-            df_met.where(np.logical_or(df_flx.GPP_qc == 0, df_flx.Qle_qc == 10),
+            df_met.where(np.logical_or(df_flx.GPP_qc == 0, df_flx.GPP_qc == 10),
                          inplace=True)
 
             # Measured = 0 ; 10 = instrument calibration correction,  good data
-            df_flx.where(np.logical_or(df_flx.Qle_qc == 0, df_flx.Qle_qc == 10),
+            df_flx.where(np.logical_or(df_flx.Qle_qc == 0, df_flx.Qle_qc == 1),
                          inplace=True)
-            df_flx.where(np.logical_or(df_flx.GPP_qc == 0, df_flx.Qle_qc == 10),
+            df_flx.where(np.logical_or(df_flx.GPP_qc == 0, df_flx.GPP_qc == 10),
                          inplace=True)
 
         elif source == "FLUXNET2015":
@@ -228,15 +228,17 @@ class EstimateWUE(object):
             df_met.where(np.logical_or(df_flx.Qle_qc == 0, df_flx.Qle_qc == 1),
                          inplace=True)
 
-            # Measured and good-quality gap fill
-            df_met.where(df_flx.NEE_GPP_qcOK == 1, inplace=True)
+            # Measured = 0 ; good-quality gap-fill = 1
+            df_met.where(np.logical_or(df_flx.GPP_qc == 0, df_flx.GPP_qc == 1),
+                         inplace=True)
 
             # Measured = 0 ; good-quality gap-fill = 1
             df_flx.where(np.logical_or(df_flx.Qle_qc == 0, df_flx.Qle_qc == 1),
                          inplace=True)
 
             # Measured and good-quality gap fill
-            df_flx.where(df_flx.NEE_GPP_qcOK == 1, inplace=True)
+            df_flx.where(np.logical_or(df_flx.GPP_qc == 0, df_flx.GPP_qc == 1),
+                         inplace=True)
 
         # Mask by met data.
         # Measured = 0 ; good-quality gap-fill = 1
