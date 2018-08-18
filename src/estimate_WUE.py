@@ -6,6 +6,17 @@ Estimate ecosystem WUE (three ways) for FLUXNET2015, La Thuile and OzFlux.
 NB. relies on datasets being pre-processed via Anna's package
 https://github.com/aukkola/FluxnetLSM
 
+References:
+-----------
+* Beer, C. et al. (2009) Temporal and among-site variability of inherent water
+  use efficiency at the ecosystem level. Global Biogeochemical Cycles, 23(2),
+  GB2018.
+* Keenan, T. et al. (2013) Increase in forest water-use efficiency as
+  atmospheric carbon dioxide concentrations rise. Nature, 499, 324–327.
+* Zhou, S. et al. (2014) The effect of vapor pressure deficit on water use
+  efficiency at the subdaily time scale, Geophys. Res. Lett., 41, 5005–5013
+
+
 That's all folks.
 """
 __author__ = "Martin De Kauwe"
@@ -117,17 +128,11 @@ class EstimateWUE(object):
             wue = np.where(df.ET < 0.1, np.nan, df.GPP / df.ET)
             df["wue"] = wue
 
-            # inherent WUE (g C kPa kg H2O-1)
-            # Beer, C., et al., 2009: Temporal and among-site variability of
-            # inherent water use efficiency at the ecosystem level. Global
-            # Biogeochemical Cycles 23, GB2018
+            # inherent WUE (g C kPa kg H2O-1), Beer et al.; Keenan et al. 2013
             iwue = np.where(df.ET < 0.1, np.nan, df.GPP * df.VPD / df.ET)
             df["iwue"] = iwue
 
-            # underlying WUE (g C kPa^0.5 kg H2O-1)
-            # Zhou et al. 2014 The effect of vapor pressure deficit on water
-            # use efficiency at the sub-daily time scale. Geophysical Research
-            # Letters 41.
+            # underlying WUE (g C kPa^0.5 kg H2O-1), Zhou et al. 2014
             uwue = np.where(df.ET < 0.1, np.nan,
                             df.GPP * np.sqrt(df.VPD) / df.ET)
             df["uwue"] = uwue
