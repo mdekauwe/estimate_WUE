@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Estimate ecosystem WUE for FLUXNET2015, La Thuile and OzFlux.
+Estimate ecosystem WUE (three ways) for FLUXNET2015, La Thuile and OzFlux.
 
 NB. relies on datasets being pre-processed via Anna's package
 https://github.com/aukkola/FluxnetLSM
@@ -34,10 +34,6 @@ class EstimateWUE(object):
         self.data_source = data_source
         self.num_cores = num_cores
 
-        # W/m2 = 1000 (kg/m3) * 2.45 (MJ/kg) * 10^6 (J/kg) * 1 mm/day * \
-        #        (1/86400) (day/s) * (1/1000) (mm/m)
-        # 2.45 * 1E6 W/m2 = kg/m2/s or mm/s
-        self.WM2_TO_KG_M2_S = 1.0 / ( 2.45 * 1E6 )
         self.KG_TO_G = 1000.0
         self.MOL_TO_MMOL = 1000.0
         self.G_TO_MOL_H20 = 1.0 / 18.0
@@ -48,8 +44,7 @@ class EstimateWUE(object):
         self.UMOL_TO_MOL = 0.000001
         self.MOL_C_TO_GRAMS_C = 12.
 
-        self.out_cols = ["Site","Year","WUE"]
-
+        self.out_cols = ["Site","Year","WUE", "IWUE", "UWUE"]
         self.bad_sites = {'IT-Cpz':'1997-1998'}
 
     def main(self):
@@ -117,8 +112,26 @@ class EstimateWUE(object):
             df_s = df_flx.resample("D").sum()
             df_m = df_met.resample("D").mean()
             df = pd.concat([df_s, df_m], axis=1)
-            wue = np.where(df.ET < 0.1, np.nan, df.GPP / df.ET * df.VPD)
+
+            # ecosystem WUE (g C kg H2O-1)
+            wue = np.where(df.ET < 0.1, np.nan, df.GPP / df.ET)
             df["wue"] = wue
+
+            # inherent WUE (g C kPa kg H2O-1)
+            # Beer, C., et al., 2009: Temporal and among-site variability of
+            # inherent water use efficiency at the ecosystem level. Global
+            # Biogeochemical Cycles 23, GB2018
+            iwue = np.where(df.ET < 0.1, np.nan, df.GPP * df.VPD / df.ET)
+            df["iwue"] = iwue
+
+            # underlying WUE (g C kPa^0.5 kg H2O-1)
+            # Zhou et al. 2014 The effect of vapor pressure deficit on water
+            # use efficiency at the sub-daily time scale. Geophysical Research
+            # Letters 41.
+            uwue = np.where(df.ET < 0.1, np.nan,
+                            df.GPP * np.sqrt(df.VPD) / df.ET)
+            df["uwue"] = uwue
+
             df = df.resample("A").mean()
             df = df[~np.isnan(df.wue)]
 
@@ -251,9 +264,13 @@ class EstimateWUE(object):
                      inplace=True)
         df_flx.where(np.logical_or(df_met.VPD_qc == 0, df_met.VPD_qc == 1),
                      inplace=True)
+        df_flx.where(np.logical_or(df_met.Tair_qc == 0, df_met.Tair_qc == 1),
+                     inplace=True)
         df_met.where(np.logical_or(df_met.Rainf_qc == 0, df_met.Rainf_qc == 1),
                      inplace=True)
         df_met.where(np.logical_or(df_met.VPD_qc == 0, df_met.VPD_qc == 1),
+                     inplace=True)
+        df_met.where(np.logical_or(df_met.Tair_qc == 0, df_met.Tair_qc == 1),
                      inplace=True)
 
         # Mask dew
@@ -261,7 +278,9 @@ class EstimateWUE(object):
         df_flx.where(df_flx.Qle > 0., inplace=True)
 
         # Convert units ...
-        df_flx["ET"] = df_flx['Qle'] * self.WM2_TO_KG_M2_S
+        lambdax = self.latent_heat_vapourisation(df_met.Tair)
+        df_flx["ET"] = df_flx['Qle'] / lambdax
+
         diff = df_met.index.minute[1] - df_met.index.minute[0]
         if diff == 0:
             # hour gap i.e. Tumba
@@ -343,11 +362,27 @@ class EstimateWUE(object):
 
     def write_row(self, site, df, i, df_out):
 
-        row = pd.Series([site, df.index.year[i], df.wue[i]],
+        row = pd.Series([site, df.index.year[i], df.wue[i], df.iwue[i],
+                         df.uwue[i]],
                         index=self.out_cols)
         result = df_out.append(row, ignore_index=True)
 
         return result
+
+    def latent_heat_vapourisation(self, tair):
+        """
+        Latent heat of vapourisation is approximated by a linear func of air
+        temp.
+
+        Reference:
+        ----------
+        * Stull, B., 1988: An Introduction to Boundary Layer Meteorology
+          Boundary Conditions, pg 279.
+        """
+        return (2.501 - 0.00237 * tair) * 1E06
+
+
+
 
 
 if __name__ == "__main__":
@@ -363,7 +398,7 @@ if __name__ == "__main__":
     #               'IT-Cpz_1997-1998_FLUXNET2015_Flux.nc',\
     #               'IT-Cpz_2000-2009_FLUXNET2015_Flux.nc',\
     #               'FR-Pue_2000-2014_FLUXNET2015_Flux.nc'] #[]
-    flux_subset = []
+    flux_subset = ['US-Ha1_1991-2012_FLUXNET2015_Flux.nc']
     data_source = ["FLUXNET2015"] # ignored if the above isn't empty
     # ------------------------------------------- #
 
