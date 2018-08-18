@@ -11,10 +11,12 @@ References:
 * Beer, C. et al. (2009) Temporal and among-site variability of inherent water
   use efficiency at the ecosystem level. Global Biogeochemical Cycles, 23(2),
   GB2018.
+* Huang, M. et al. (2015) Change in terrestrial ecosystem water‐use efficiency
+  over the last three decades. Glob Change Biol, 21, 2366-2378.
 * Keenan, T. et al. (2013) Increase in forest water-use efficiency as
   atmospheric carbon dioxide concentrations rise. Nature, 499, 324–327.
 * Zhou, S. et al. (2014) The effect of vapor pressure deficit on water use
-  efficiency at the subdaily time scale, Geophys. Res. Lett., 41, 5005–5013
+  efficiency at the subdaily time scale. Geophys. Res. Lett., 41, 5005–5013
 
 
 That's all folks.
@@ -124,15 +126,16 @@ class EstimateWUE(object):
             df_m = df_met.resample("D").mean()
             df = pd.concat([df_s, df_m], axis=1)
 
-            # ecosystem WUE (g C kg H2O-1)
+            # ecosystem WUE (g C kg H2O-1), e.g. Huang et al. 2015
             wue = np.where(df.ET < 0.1, np.nan, df.GPP / df.ET)
             df["wue"] = wue
 
-            # inherent WUE (g C kPa kg H2O-1), Beer et al.; Keenan et al. 2013
+            # inherent WUE (g C kPa kg H2O-1), e.g. Beer et al. or
+            # Keenan et al. 2013
             iwue = np.where(df.ET < 0.1, np.nan, df.GPP * df.VPD / df.ET)
             df["iwue"] = iwue
 
-            # underlying WUE (g C kPa^0.5 kg H2O-1), Zhou et al. 2014
+            # underlying WUE (g C kPa^0.5 kg H2O-1), e.g. Zhou et al. 2014
             uwue = np.where(df.ET < 0.1, np.nan,
                             df.GPP * np.sqrt(df.VPD) / df.ET)
             df["uwue"] = uwue
